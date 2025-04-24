@@ -1,0 +1,53 @@
+{
+  "name": "nodearch2",
+  "version": "0.0.1",
+  "description": "Node.js web projects architecture v2",
+  "main": "index.js",
+  "scripts": {
+    "servers": "nodemon servers/servers.js",
+    "server3070": "nodemon theme30/server3070/server3070.js",
+    "servers_filelog": "node servers/servers.js >> /home/nodeuser/NodeArch/_nodemon.log",
+    "server3085:dev": "cross-env NODE_ENV=development VAR1=aaa node theme30/server3085/server3085.js",
+    "server3085:prod": "cross-env NODE_ENV=production VAR1=bbb node theme30/server3085/server3085.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loktevalexey/NodeArch-V2.git"
+  },
+  "keywords": [],
+  "author": "Loktev Alexey",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.6.0",
+    "@babel/preset-env": "^7.6.0",
+    "@babel/preset-react": "^7.6.3",
+    "@babel/register": "^7.6.0",
+    "body-parser": "^1.20.3",
+    "compression": "^1.7.4",
+    "connect-busboy": "0.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "cross-env": "^6.0.3",
+    "express": "^4.21.1",
+    "express-handlebars": "^5.3.1",
+    "express-session": "^1.18.1",
+    "helmet": "^3.21.1",
+    "ignore-styles": "^5.0.1",
+    "isomorphic-fetch": "^3.0.0",
+    "jasmine-node": "^3.0.0",
+    "jimp": "^0.22.12",
+    "js-sha256": "^0.9.0",
+    "mongodb": "^3.3.2",
+    "mongoose": "^8.9.5",
+    "multer": "^1.4.2",
+    "mysql": "^2.18.0",
+    "nodemailer": "^6.9.9",
+    "nodemon": "^2.0.20",
+    "progress-stream": "^2.0.0",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1",
+    "ws": "^7.5.10"
+  }
+}

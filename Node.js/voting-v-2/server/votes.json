@@ -1,0 +1,20 @@
+{
+  "question": "Hey guys, let's vote for something",
+  "answers": [
+    {
+      "id": 1,
+      "text": "Let's do it, but don't write the answers to the server",
+      "votes": 23
+    },
+    {
+      "id": 2,
+      "text": "No, it might be dangerous",
+      "votes": 22
+    },
+    {
+      "id": 3,
+      "text": "I'm an introvert, I just nodded",
+      "votes": 26
+    }
+  ]
+}
