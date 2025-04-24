@@ -1,5 +1,0 @@
-[
-    "file13.txt",
-    "file12.txt",
-    "file11.txt"
-]
