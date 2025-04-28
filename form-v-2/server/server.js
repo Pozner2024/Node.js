@@ -116,12 +116,20 @@ webserver.post("/form", (req, res) => {
   }
 
   if (Object.keys(errors).length > 0) {
-    lastErrors = errors;
-    lastValues = { surname, name, age, mail };
-    return res.redirect("/form");
+    const formHTML = formTemplate
+      .replace("$[surname]", `value="${surname || ""}"`)
+      .replace("$[SURNAMEERR]", errors.SURNAMEERR || "")
+      .replace("$[name]", `value="${name || ""}"`)
+      .replace("$[NAMEERR]", errors.NAMEERR || "")
+      .replace("$[age]", `value="${age || ""}"`)
+      .replace("$[AGEERR]", errors.AGEERR || "")
+      .replace("$[mail]", `value="${mail || ""}"`)
+      .replace("$[MAILERR]", errors.MAILERR || "");
+
+    return res.send(formHTML);
   }
 
-  // Успех: редиректим на /success с параметром
+  // Если ошибок нет, редирект
   res.redirect(`/success?surname=${encodeURIComponent(surname)}`);
 });
 
