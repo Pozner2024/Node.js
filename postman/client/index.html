@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Упрощённый Postman через Proxy</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div id="savedRequests"></div>
+    </div>
+
+    <div class="main">
+      <h1>Postman</h1>
+      <form class="request-form" id="requestForm" onsubmit="return false;">
+        <select id="method">
+          <option>GET</option>
+          <option>POST</option>
+          <option>PUT</option>
+          <option>PATCH</option>
+          <option>DELETE</option>
+        </select>
+        <input type="text" id="url" placeholder="URL" required />
+        <div id="requestBody">
+          <label for="body">Тело запроса (JSON):</label>
+          <textarea id="body" rows="5"></textarea>
+        </div>
+        <div class="btn-group">
+          <button type="button" id="saveBtn">Сохранить</button>
+          <button type="button" id="runBtn">Выполнить</button>
+          <button type="reset">Очистить</button>
+        </div>
+      </form>
+      <div id="responseBox"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

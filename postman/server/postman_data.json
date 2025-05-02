@@ -1,0 +1,55 @@
+[
+  {
+    "method": "PUT",
+    "url": "PUT https://httpbin.org/put",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "name": "Alice",
+      "age": 30
+    }
+  },
+  {
+    "method": "GET",
+    "url": "http://fe.it-academy.by/aaa.gif",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "DELETE",
+    "url": "http://nodearch.e-learning.by:4052/main1.html",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "http://nodearch.e-learning.by:4052/main1.html",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://fe.it-academy.by/images/logo3.png",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://www.ibm.com/products/api-connect?lnk=flatitem&test=1234",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "PATCH",
+    "url": "https://jsonplaceholder.typicode.com/posts/1",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+]
