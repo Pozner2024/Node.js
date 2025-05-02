@@ -34,26 +34,37 @@ webserver.get("/proxy", (req, res) => {
 });
 
 // POST /proxy — три сценария:
-// 1) isExecution — выполнять запрос «на лету»
-// 2) index — выполнять сохранённый по индексу
-// 3) иначе — сохранять новый
+// 1) isExecution — выполнить запрос «на лету»
+// 2) index — выполнить сохранённый по индексу
+// 3) иначе — сохранить новый
 webserver.post("/proxy", async (req, res) => {
   const { isExecution, index, method, url, headers, body } = req.body;
 
-  // Ветка 1: «на лету» выполнить присланный запрос
+  // Ветка 1: «на лету»
   if (isExecution) {
     try {
-      // Собираем опции для fetch
-      const opts = { method, headers: headers || {} };
+      const opts = {
+        method,
+        headers: headers || {},
+        redirect: "manual",
+      };
       if (body != null && !["GET", "HEAD", "DELETE"].includes(method)) {
         opts.body = JSON.stringify(body);
       }
 
-      // Выполняем запрос к внешнему URL
       const response = await fetch(url, opts);
       const ct = response.headers.get("content-type") || "";
 
-      // Парсим тело в зависимости от Content-Type
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        return res.json({
+          status: response.status,
+          statusText: response.statusText,
+          headers: { location },
+          body: null,
+        });
+      }
+
       let responseBody;
       if (ct.includes("application/json")) {
         responseBody = await response.json();
@@ -64,13 +75,11 @@ webserver.post("/proxy", async (req, res) => {
         responseBody = Buffer.from(buf).toString("hex");
       }
 
-      // Собираем заголовки в объект
       const responseHeaders = {};
       response.headers.forEach((v, k) => {
         responseHeaders[k] = v;
       });
 
-      // Отдаём клиенту
       return res.json({
         status: response.status,
         statusText: response.statusText,
@@ -93,13 +102,27 @@ webserver.post("/proxy", async (req, res) => {
         return res.status(404).json({ error: "Запрос не найден" });
       }
 
-      const opts = { method: cfg.method, headers: cfg.headers || {} };
+      const opts = {
+        method: cfg.method,
+        headers: cfg.headers || {},
+        redirect: "manual",
+      };
       if (cfg.body != null && !["GET", "HEAD", "DELETE"].includes(cfg.method)) {
         opts.body = JSON.stringify(cfg.body);
       }
 
       const response = await fetch(cfg.url, opts);
       const ct = response.headers.get("content-type") || "";
+
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        return res.json({
+          status: response.status,
+          statusText: response.statusText,
+          headers: { location },
+          body: null,
+        });
+      }
 
       let responseBody;
       if (ct.includes("application/json")) {
@@ -141,6 +164,6 @@ webserver.post("/proxy", async (req, res) => {
   });
 });
 
-const server = webserver.listen(PORT, () => {
+webserver.listen(PORT, () => {
   console.log(`Сервер запущен на http://localhost:${PORT}`);
 });

@@ -51,5 +51,19 @@
     "headers": {
       "Content-Type": "application/json"
     }
+  },
+  {
+    "method": "GET",
+    "url": "https://system.skladusa.com/auth/login",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://www.nationalww2museum.org/war/topics/end-world-war-ii-1945",
+    "headers": {
+      "Content-Type": "application/json"
+    }
   }
 ]
