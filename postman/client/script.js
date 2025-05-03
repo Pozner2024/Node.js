@@ -93,10 +93,13 @@ async function loadSavedRequests() {
   const list = await res.json();
   const container = document.getElementById("savedRequests");
   container.innerHTML = "";
-  list.forEach((r) => {
+
+  list.forEach((r, i) => {
     const div = document.createElement("div");
     div.className = "request-item";
     div.textContent = `${r.method} ${r.url}`;
+
+    // клик — загружаем в форму
     div.addEventListener("click", () => {
       methodSelect.value = r.method;
       document.getElementById("url").value = r.url;
@@ -117,6 +120,7 @@ async function loadSavedRequests() {
         });
       }
     });
+
     container.appendChild(div);
   });
 }
@@ -163,7 +167,6 @@ function renderResponse(result) {
   box.appendChild(hdrsPre);
   box.appendChild(bodyLabel);
 
-  // Тело ответа
   if (ct.includes("text/html")) {
     const iframe = document.createElement("iframe");
     iframe.srcdoc = result.body;
@@ -198,16 +201,13 @@ async function saveRequest() {
   const urlInput = document.getElementById("url");
   const url = urlInput.value.trim();
 
-  const isValid = validateURL(url);
-  if (!isValid) {
+  if (!validateURL(url)) {
     alert("Неверный URL: " + url);
     return;
   }
 
   const headers = collectHeaders();
-  if (headers === null) {
-    return;
-  }
+  if (headers === null) return;
 
   if (!headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
@@ -227,19 +227,12 @@ async function saveRequest() {
     return;
   }
 
-  const requestToSave = {
-    method: method,
-    url: url,
-    headers: headers,
-  };
-
+  const requestToSave = { method, url, headers };
   const methodsWithBody = ["POST", "PUT"];
-  const hasBody = methodsWithBody.includes(method) && bodyText.trim() !== "";
-
-  if (hasBody) {
+  if (methodsWithBody.includes(method) && bodyText.trim() !== "") {
     try {
       requestToSave.body = JSON.parse(bodyText);
-    } catch (error) {
+    } catch {
       alert("Ошибка в JSON-теле");
       return;
     }
@@ -250,34 +243,28 @@ async function saveRequest() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestToSave),
   });
-
   const saveResult = await saveResponse.json();
-
   if (saveResponse.ok) {
     alert(saveResult.message || "Сохранено");
     loadSavedRequests();
   } else {
-    const errorMessage = saveResult.error || saveResponse.statusText;
-    alert("Ошибка: " + errorMessage);
+    alert("Ошибка: " + (saveResult.error || saveResponse.statusText));
   }
 }
-//Отправляет HTTP-запрос через /proxy и отображает ответ
 
+// Отправка custom-запроса
 async function runRequest() {
   const method = methodSelect.value;
   const urlInput = document.getElementById("url");
   const url = urlInput.value.trim();
 
-  const isValid = validateURL(url);
-  if (!isValid) {
+  if (!validateURL(url)) {
     alert("Неверный URL: " + url);
     return;
   }
 
   const headers = collectHeaders();
-  if (headers === null) {
-    return;
-  }
+  if (headers === null) return;
 
   if (!headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
@@ -286,20 +273,12 @@ async function runRequest() {
   const bodyTextarea = document.getElementById("body");
   const bodyText = bodyTextarea.value;
 
-  const requestToSend = {
-    method: method,
-    url: url,
-    isExecution: true,
-    headers: headers,
-  };
-
+  const requestToSend = { method, url, isExecution: true, headers };
   const methodsWithBody = ["POST", "PUT", "PATCH"];
-  const hasBody = methodsWithBody.includes(method) && bodyText.trim() !== "";
-
-  if (hasBody) {
+  if (methodsWithBody.includes(method) && bodyText.trim() !== "") {
     try {
       requestToSend.body = JSON.parse(bodyText);
-    } catch (error) {
+    } catch {
       alert("Ошибка в JSON-теле");
       return;
     }
@@ -317,7 +296,6 @@ async function runRequest() {
 
 document.getElementById("runBtn").addEventListener("click", runRequest);
 document.getElementById("saveBtn").addEventListener("click", saveRequest);
-
 form.addEventListener("reset", () => {
   bodyBlock.style.display = "none";
   document.getElementById("body").value = "";
@@ -325,7 +303,4 @@ form.addEventListener("reset", () => {
   document.getElementById("responseBox").style.display = "none";
 });
 
-window.addEventListener("load", () => {
-  loadSavedRequests();
-  document.getElementById("responseBox").style.display = "none";
-});
+loadSavedRequests();
