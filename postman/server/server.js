@@ -1,6 +1,12 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { engine } from "express-handlebars";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const webserver = express();
 const PORT = 3000;
@@ -8,22 +14,24 @@ const PORT = 3000;
 const DATA_PATH = path.join(__dirname, "postman_data.json");
 const CLIENT_PATH = path.join(__dirname, "..", "client");
 
+webserver.engine("handlebars", engine());
+webserver.set("view engine", "handlebars");
+webserver.set("views", path.join(__dirname, "views"));
+
 webserver.use(express.json());
-
-webserver.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS" && req.path === "/proxy") {
-    return res.sendStatus(204); // preflight
-  }
-  next();
-});
-
 webserver.use("/", express.static(CLIENT_PATH));
 
-// Возвращаем список сохранённых запросов
+// возвращает HTML-список
+webserver.get("/saved-requests-html", async (req, res) => {
+  try {
+    const data = await fs.promises.readFile(DATA_PATH, "utf8");
+    const list = JSON.parse(data || "[]");
+    res.render("requestList", { requests: list, layout: false });
+  } catch (err) {
+    res.render("requestList", { requests: [], layout: false });
+  }
+});
+
 webserver.get("/proxy", (req, res) => {
   fs.readFile(DATA_PATH, "utf8", (err, data) => {
     if (err) return res.json([]);
@@ -35,15 +43,27 @@ webserver.get("/proxy", (req, res) => {
   });
 });
 
-// Обработка запроса: выполнение или сохранение
+// Сохранение и выполнение запросов
 webserver.post("/proxy", async (req, res) => {
-  const { method, url, headers, body, isExecution, index } = req.body;
+  const { method, url, headers, body, isExecution, id } = req.body;
 
-  // Сохранение нового запроса
-  if (!isExecution && typeof index !== "number") {
+  if (!isExecution && typeof id !== "number") {
     const newReq = { method, url, headers, body };
     fs.readFile(DATA_PATH, "utf8", (err, data) => {
-      const list = err ? [] : JSON.parse(data);
+      const list = err ? [] : JSON.parse(data || "[]");
+
+      const isDuplicate = list.some(
+        (r) =>
+          r.method === newReq.method &&
+          r.url === newReq.url &&
+          JSON.stringify(r.headers) === JSON.stringify(newReq.headers) &&
+          JSON.stringify(r.body) === JSON.stringify(newReq.body)
+      );
+
+      if (isDuplicate) {
+        return res.status(200).json({ message: "Запрос уже существует" });
+      }
+
       list.push(newReq);
       fs.writeFile(DATA_PATH, JSON.stringify(list, null, 2), (err) => {
         if (err) return res.status(500).json({ error: "Ошибка сохранения" });
@@ -56,12 +76,10 @@ webserver.post("/proxy", async (req, res) => {
   // Выполнение запроса
   try {
     let cfg = { method, url, headers, body };
-
-    if (typeof index === "number") {
+    if (typeof id === "number") {
       const list = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
-      if (!list[index])
-        return res.status(404).json({ error: "Запрос не найден" });
-      cfg = list[index];
+      if (!list[id]) return res.status(404).json({ error: "Запрос не найден" });
+      cfg = list[id];
     }
 
     const opts = {
@@ -70,14 +88,14 @@ webserver.post("/proxy", async (req, res) => {
       redirect: "manual",
     };
 
-    if (cfg.body != null && !["GET", "HEAD", "DELETE"].includes(cfg.method)) {
+    if (cfg.body && !["GET", "HEAD", "DELETE"].includes(cfg.method)) {
       opts.body = JSON.stringify(cfg.body);
     }
 
     const response = await fetch(cfg.url, opts);
     const ct = response.headers.get("content-type") || "";
-
     let responseBody;
+
     if (ct.includes("application/json")) {
       responseBody = await response.json();
     } else if (ct.includes("text/") || ct.includes("html")) {
@@ -99,9 +117,9 @@ webserver.post("/proxy", async (req, res) => {
       body: responseBody,
     });
   } catch (e) {
-    return res.status(500).json({
-      error: "Ошибка выполнения запроса: " + e.message,
-    });
+    return res
+      .status(500)
+      .json({ error: "Ошибка выполнения запроса: " + e.message });
   }
 });
 

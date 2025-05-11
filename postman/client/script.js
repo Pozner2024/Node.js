@@ -1,8 +1,13 @@
 const form = document.getElementById("requestForm");
-form.addEventListener("submit", (e) => e.preventDefault());
-
 const methodSelect = document.getElementById("method");
 const bodyBlock = document.getElementById("requestBody");
+const requestIdInput = document.getElementById("requestId");
+const addHeaderBtn = document.getElementById("addHeaderBtn");
+
+// Предотвращаем реальный сабмит
+form.addEventListener("submit", (e) => e.preventDefault());
+
+// Показ/скрытие блока body
 methodSelect.addEventListener("change", (e) => {
   bodyBlock.style.display = ["POST", "PUT", "PATCH"].includes(e.target.value)
     ? "flex"
@@ -10,7 +15,6 @@ methodSelect.addEventListener("change", (e) => {
 });
 
 // Добавление/удаление заголовков
-const addHeaderBtn = document.getElementById("addHeaderBtn");
 addHeaderBtn.addEventListener("click", () => {
   const row = document.createElement("div");
   row.classList.add("header-row");
@@ -27,105 +31,45 @@ addHeaderBtn.addEventListener("click", () => {
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
-  removeBtn.classList.add("remove-hdr");
   removeBtn.textContent = "×";
   removeBtn.addEventListener("click", () => row.remove());
 
-  row.appendChild(nameInput);
-  row.appendChild(valueInput);
-  row.appendChild(removeBtn);
-
+  row.append(nameInput, valueInput, removeBtn);
   document.getElementById("headerRows").appendChild(row);
 });
 
 function collectHeaders() {
   const headers = {};
-  const rows = document.querySelectorAll("#headerRows .header-row");
-
-  const isValidName = (name) => /^[A-Za-z][A-Za-z0-9-]*$/.test(name);
-  const isValidValue = (value) => !/[\r\n]/.test(value);
-
-  for (const row of rows) {
+  for (const row of document.querySelectorAll("#headerRows .header-row")) {
     const name = row.querySelector(".hdr-name").value.trim();
     const value = row.querySelector(".hdr-value").value.trim();
-
     if (!name && !value) continue;
-
     if (!name) {
       alert("Название заголовка не может быть пустым");
       return null;
     }
-
-    if (!isValidName(name)) {
-      alert(
-        `Недопустимое имя заголовка: "${name}". Имя должно начинаться с буквы и содержать только буквы, цифры или дефисы.`
-      );
+    if (!/^[A-Za-z][A-Za-z0-9-]*$/.test(name)) {
+      alert(`Недопустимое имя заголовка: "${name}"`);
       return null;
     }
-
-    if (!isValidValue(value)) {
-      alert("Недопустимое значение заголовка (содержит перенос строки)");
+    if (/[\r\n]/.test(value)) {
+      alert("Недопустимое значение заголовка");
       return null;
     }
-
     headers[name] = value;
   }
-
   return headers;
 }
 
-// Проверка валидности URL
 function validateURL(str) {
   try {
-    const url = new URL(str);
-    return (
-      ["http:", "https:"].includes(url.protocol) &&
-      /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(url.hostname)
-    );
+    const u = new URL(str);
+    return ["http:", "https:"].includes(u.protocol);
   } catch {
     return false;
   }
 }
 
-// Загрузка сохранённых запросов
-async function loadSavedRequests() {
-  const res = await fetch("/proxy");
-  const list = await res.json();
-  const container = document.getElementById("savedRequests");
-  container.innerHTML = "";
-
-  list.forEach((r, i) => {
-    const div = document.createElement("div");
-    div.className = "request-item";
-    div.textContent = `${r.method} ${r.url}`;
-
-    // клик — загружаем в форму
-    div.addEventListener("click", () => {
-      methodSelect.value = r.method;
-      document.getElementById("url").value = r.url;
-      bodyBlock.style.display = ["POST", "PUT", "PATCH"].includes(r.method)
-        ? "flex"
-        : "none";
-      document.getElementById("body").value = r.body
-        ? JSON.stringify(r.body, null, 2)
-        : "";
-      const headerRows = document.getElementById("headerRows");
-      headerRows.innerHTML = "";
-      if (r.headers) {
-        Object.entries(r.headers).forEach(([k, v]) => {
-          addHeaderBtn.click();
-          const last = headerRows.querySelector(".header-row:last-child");
-          last.querySelector(".hdr-name").value = k;
-          last.querySelector(".hdr-value").value = v;
-        });
-      }
-    });
-
-    container.appendChild(div);
-  });
-}
-
-// Отрисовка ответа
 function renderResponse(result) {
   const box = document.getElementById("responseBox");
   box.style.display = "block";
@@ -136,36 +80,15 @@ function renderResponse(result) {
   }
 
   const ct = (result.headers?.["content-type"] || "").toLowerCase();
-  const hdrs = Object.entries(result.headers || {})
-    .map(([k, v]) => `${k}: ${v}`)
-    .join("\n");
-
-  const statusPara = document.createElement("p");
-  const statusLabel = document.createElement("strong");
-  statusLabel.textContent = "Статус: ";
-  statusPara.appendChild(statusLabel);
-  statusPara.append(`${result.status} ${result.statusText}`);
-
-  const ctPara = document.createElement("p");
-  const ctLabel = document.createElement("strong");
-  ctLabel.textContent = "Content-Type: ";
-  ctPara.appendChild(ctLabel);
-  ctPara.append(ct);
-
-  const hdrsLabel = document.createElement("strong");
-  hdrsLabel.textContent = "Заголовки:";
-
-  const hdrsPre = document.createElement("pre");
-  hdrsPre.textContent = hdrs;
-
-  const bodyLabel = document.createElement("strong");
-  bodyLabel.textContent = "Тело:";
-
-  box.appendChild(statusPara);
-  box.appendChild(ctPara);
-  box.appendChild(hdrsLabel);
-  box.appendChild(hdrsPre);
-  box.appendChild(bodyLabel);
+  box.innerHTML = `
+    <p><strong>Статус:</strong> ${result.status} ${result.statusText}</p>
+    <p><strong>Content-Type:</strong> ${ct}</p>
+    <strong>Заголовки:</strong>
+    <pre>${Object.entries(result.headers || {})
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n")}</pre>
+    <strong>Тело:</strong>
+  `;
 
   if (ct.includes("text/html")) {
     const iframe = document.createElement("iframe");
@@ -195,111 +118,140 @@ function renderResponse(result) {
   }
 }
 
-// Сохранение запроса
+async function loadSavedRequests() {
+  const res = await fetch("/saved-requests-html");
+  const html = await res.text();
+  const container = document.getElementById("savedRequests");
+  container.innerHTML = html;
+
+  container.querySelectorAll(".request-item").forEach((el) => {
+    el.addEventListener("click", async () => {
+      const index = el.dataset.index;
+      const res = await fetch("/proxy");
+      const list = await res.json();
+      const r = list[index];
+
+      requestIdInput.value = index;
+      methodSelect.value = r.method;
+      document.getElementById("url").value = r.url;
+      bodyBlock.style.display = ["POST", "PUT", "PATCH"].includes(r.method)
+        ? "flex"
+        : "none";
+      document.getElementById("body").value = r.body
+        ? JSON.stringify(r.body, null, 2)
+        : "";
+      document.getElementById("headerRows").innerHTML = "";
+      if (r.headers) {
+        Object.entries(r.headers).forEach(([k, v]) => {
+          addHeaderBtn.click();
+          const last = document.querySelector(
+            "#headerRows .header-row:last-child"
+          );
+          last.querySelector(".hdr-name").value = k;
+          last.querySelector(".hdr-value").value = v;
+        });
+      }
+    });
+  });
+}
+
 async function saveRequest() {
   const method = methodSelect.value;
-  const urlInput = document.getElementById("url");
-  const url = urlInput.value.trim();
-
+  const url = document.getElementById("url").value.trim();
   if (!validateURL(url)) {
-    alert("Неверный URL: " + url);
+    alert("Неверный URL");
     return;
   }
 
   const headers = collectHeaders();
   if (headers === null) return;
+  if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
 
-  if (!headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
+  const bodyText = document.getElementById("body").value.trim();
+  const payload = { method, url, headers };
+  const id = Number(requestIdInput.value);
+
+  if (["POST", "PUT", "PATCH"].includes(method) && bodyText) {
+    try {
+      payload.body = JSON.parse(bodyText);
+    } catch {
+      alert("Неверный JSON");
+      return;
+    }
   }
 
-  const bodyTextarea = document.getElementById("body");
-  const bodyText = bodyTextarea.value;
-
-  const response = await fetch("/proxy");
-  const savedRequests = await response.json();
-
-  const alreadySaved = savedRequests.find(
-    (r) => r.url === url && r.method === method
-  );
-  if (alreadySaved) {
+  if (id) {
     alert("Этот запрос уже сохранён");
     return;
   }
 
-  const requestToSave = { method, url, headers };
-  const methodsWithBody = ["POST", "PUT"];
-  if (methodsWithBody.includes(method) && bodyText.trim() !== "") {
-    try {
-      requestToSave.body = JSON.parse(bodyText);
-    } catch {
-      alert("Ошибка в JSON-теле");
-      return;
-    }
-  }
-
-  const saveResponse = await fetch("/proxy", {
+  const resp = await fetch("/proxy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestToSave),
+    body: JSON.stringify(payload),
   });
-  const saveResult = await saveResponse.json();
-  if (saveResponse.ok) {
-    alert(saveResult.message || "Сохранено");
+
+  const result = await resp.json();
+  if (resp.ok) {
+    alert(result.message || "Сохранено");
     loadSavedRequests();
   } else {
-    alert("Ошибка: " + (saveResult.error || saveResponse.statusText));
+    alert("Ошибка: " + (result.error || resp.statusText));
   }
 }
 
-// Отправка custom-запроса
 async function runRequest() {
-  const method = methodSelect.value;
-  const urlInput = document.getElementById("url");
-  const url = urlInput.value.trim();
-
+  const url = document.getElementById("url").value.trim();
   if (!validateURL(url)) {
-    alert("Неверный URL: " + url);
+    alert("Неверный URL");
     return;
   }
 
   const headers = collectHeaders();
   if (headers === null) return;
+  if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
 
-  if (!headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
+  const bodyText = document.getElementById("body").value.trim();
+  const id = Number(requestIdInput.value);
+
+  if (id) {
+    const resp = await fetch("/proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isExecution: true, id }),
+    });
+    renderResponse(await resp.json());
+    return;
   }
 
-  const bodyTextarea = document.getElementById("body");
-  const bodyText = bodyTextarea.value;
-
-  const requestToSend = { method, url, isExecution: true, headers };
-  const methodsWithBody = ["POST", "PUT", "PATCH"];
-  if (methodsWithBody.includes(method) && bodyText.trim() !== "") {
+  const method = methodSelect.value;
+  const payload = { method, url, headers, isExecution: true };
+  if (["POST", "PUT", "PATCH"].includes(method) && bodyText) {
     try {
-      requestToSend.body = JSON.parse(bodyText);
+      payload.body = JSON.parse(bodyText);
     } catch {
-      alert("Ошибка в JSON-теле");
+      alert("Неверный JSON");
       return;
     }
   }
 
-  const response = await fetch("/proxy", {
+  const resp = await fetch("/proxy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestToSend),
+    body: JSON.stringify(payload),
   });
 
-  const result = await response.json();
-  renderResponse(result);
+  renderResponse(await resp.json());
 }
 
-document.getElementById("runBtn").addEventListener("click", runRequest);
 document.getElementById("saveBtn").addEventListener("click", saveRequest);
+document.getElementById("runBtn").addEventListener("click", runRequest);
+
 form.addEventListener("reset", () => {
+  requestIdInput.value = "";
   bodyBlock.style.display = "none";
-  document.getElementById("body").value = "";
   document.getElementById("headerRows").innerHTML = "";
+  document.getElementById("body").value = "";
   document.getElementById("responseBox").style.display = "none";
 });
 

@@ -18,28 +18,8 @@
     }
   },
   {
-    "method": "DELETE",
-    "url": "http://nodearch.e-learning.by:4052/main1.html",
-    "headers": {
-      "Content-Type": "application/json"
-    }
-  },
-  {
-    "method": "GET",
-    "url": "http://nodearch.e-learning.by:4052/main1.html",
-    "headers": {
-      "Content-Type": "application/json"
-    }
-  },
-  {
-    "method": "GET",
-    "url": "https://fe.it-academy.by/images/logo3.png",
-    "headers": {
-      "Content-Type": "application/json"
-    }
-  },
-  {
-    "method": "GET",
+    "id": 1,
+    "method": "POST",
     "url": "https://www.ibm.com/products/api-connect?lnk=flatitem&test=1234",
     "headers": {
       "Content-Type": "application/json"
@@ -47,21 +27,42 @@
   },
   {
     "method": "PATCH",
-    "url": "https://jsonplaceholder.typicode.com/posts/1",
+    "url": "https://fe.it-academy.by/images/logo3.png",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "PATCH",
+    "url": "https://fe.it-academy.by/images/logo3.png",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "http://nodearch.e-learning.by:4052/main1.html",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "http://fe.it-academy.by/aaa.gif",
     "headers": {
       "Content-Type": "application/json"
     }
   },
   {
     "method": "GET",
-    "url": "https://system.skladusa.com/auth/login",
+    "url": "https://petstore.swagger.io/v2/pet/1",
     "headers": {
       "Content-Type": "application/json"
     }
   },
   {
     "method": "GET",
-    "url": "https://www.nationalww2museum.org/war/topics/end-world-war-ii-1945",
+    "url": "https://petstore.swagger.io/v2/pet/5",
     "headers": {
       "Content-Type": "application/json"
     }
