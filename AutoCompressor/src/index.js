@@ -8,13 +8,14 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Интерфейс командной строки
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   prompt: "AutoCompressor> ",
 });
 
-console.log("Введите путь к папке (например: ./src/test-folder)");
+console.log("Введите путь к папке (например: ../test-folder)");
 rl.prompt();
 
 rl.on("line", async (input) => {
@@ -25,18 +26,19 @@ rl.on("line", async (input) => {
     return;
   }
 
-  console.log(`🔍 Сканирование папки: ${folderPath}\n`);
+  console.log(`[INFO] Захожу в папку: ${folderPath}\n`);
 
   try {
     const files = await getAllFiles(folderPath);
 
     for (const file of files) {
+      console.log(`[INFO] Нашёл файл: ${file}`);
       await compressFile(file);
     }
 
-    console.log("🎉 Все файлы обработаны!\n");
+    console.log("\n[OK] Все файлы обработаны!\n");
   } catch (err) {
-    console.error("❌ Ошибка:", err.message);
+    console.error(`[ERROR] Ошибка: ${err.message}`);
   }
 
   rl.prompt();
@@ -50,70 +52,70 @@ rl.on("close", () => {
 
 async function getAllFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
 
-  const files = await Promise.all(
-    entries.map(async (entry) => {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        return await getAllFiles(fullPath);
-      } else {
-        return fullPath;
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      console.log(`[INFO] Захожу в подпапку: ${fullPath}`);
+      const nestedFiles = await getAllFiles(fullPath); // рекурсия
+      files.push(...nestedFiles);
+    } else {
+      if (!entry.name.endsWith(".gz")) {
+        files.push(fullPath);
       }
-    })
-  );
+    }
+  }
 
-  return files.flat();
+  return files;
 }
 
 async function compressFile(filePath) {
-  if (filePath.endsWith(".gz")) return;
-
   const gzFilePath = filePath + ".gz";
 
   try {
-    const fileStat = await stat(filePath);
-    let gzStat = null;
+    const sourceInfo = await stat(filePath);
+    let archiveInfo;
 
     try {
-      gzStat = await stat(gzFilePath);
-    } catch {
-      // gz-файл не существует
+      archiveInfo = await stat(gzFilePath);
+    } catch {}
+
+    const archiveMissing = !archiveInfo;
+    const archiveOutdated =
+      archiveInfo && sourceInfo.mtimeMs > archiveInfo.mtimeMs;
+
+    if (!archiveMissing && !archiveOutdated) {
+      console.log(`[OK] ZIP версия актуальна: ${gzFilePath}`);
+      return;
     }
 
-    let needCompress = false;
-
-    if (!gzStat) {
-      console.log(`🆕 Архив ${gzFilePath} не найден — создаётся...`);
-      needCompress = true;
-    } else if (fileStat.mtimeMs > gzStat.mtimeMs) {
-      console.log(`🔁 Архив ${gzFilePath} устарел — пересоздаётся...`);
-      needCompress = true;
+    if (archiveMissing) {
+      console.log(`[NEW] ZIP версии нет — создаю: ${gzFilePath}`);
     } else {
-      console.log(`✅ Архив ${gzFilePath} актуален, пропуск.`);
+      console.log(`[UPDATE] ZIP версия устарела — пересоздаю: ${gzFilePath}`);
     }
 
-    if (needCompress) {
-      await new Promise((resolve, reject) => {
-        const readStream = fs.createReadStream(filePath);
-        const writeStream = fs.createWriteStream(gzFilePath);
-        const gzip = zlib.createGzip();
-
-        console.log(`📦 Начато сжатие: ${filePath} → ${gzFilePath}`);
-
-        readStream
-          .pipe(gzip)
-          .pipe(writeStream)
-          .on("finish", () => {
-            console.log(`✅ Готово: ${gzFilePath}\n`);
-            resolve();
-          })
-          .on("error", (err) => {
-            console.error(`❌ Ошибка при сжатии ${filePath}:`, err.message);
-            reject(err);
-          });
-      });
-    }
+    await compressWithStreams(filePath, gzFilePath);
+    console.log(`[OK] Готово: ${gzFilePath}\n`);
   } catch (err) {
-    console.error(`❌ Ошибка при обработке ${filePath}:`, err.message);
+    console.error(`[ERROR] Ошибка с файлом ${filePath}: ${err.message}`);
   }
+}
+
+function compressWithStreams(sourcePath, destPath) {
+  return new Promise((resolve, reject) => {
+    const readStream = fs.createReadStream(sourcePath);
+    const gzip = zlib.createGzip();
+    const writeStream = fs.createWriteStream(destPath);
+
+    readStream.on("error", reject);
+    gzip.on("error", reject);
+    writeStream.on("error", reject);
+
+    writeStream.on("finish", resolve);
+
+    readStream.pipe(gzip).pipe(writeStream);
+  });
 }
