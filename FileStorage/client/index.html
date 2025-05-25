@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FileStorage</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>FileStorage</h1>
+
+    <form id="uploadForm">
+      <label for="fileInput" class="file-btn">Выбрать файл</label>
+      <input type="file" id="fileInput" name="file" required />
+      <span id="fileNameDisplay"></span>
+
+      <textarea
+        id="comment"
+        name="comment"
+        placeholder="Комментарий..."
+        rows="3"
+        required
+      ></textarea>
+
+      <button type="submit">Upload</button>
+    </form>
+
+    <div id="progress-container" class="hidden">
+      <progress id="progress-bar" max="100" value="0"></progress>
+    </div>
+    <div id="status"></div>
+
+    <h2>Список файлов</h2>
+    <ul id="fileList"></ul>
+
+    <script src="script.js"></script>
+  </body>
+</html>
