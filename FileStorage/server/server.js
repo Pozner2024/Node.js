@@ -2,8 +2,9 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import WebSocket, { WebSocketServer } from "ws";
+import { WebSocketServer } from "ws";
 import { fileURLToPath } from "url";
+import { URL } from "url";
 
 const HTTP_PORT = 3000;
 const WS_PORT = 3001;
@@ -15,60 +16,36 @@ const CLIENT_DIR = path.join(__dirname, "..", "client");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 const META_PATH = path.join(UPLOAD_DIR, "metadata.json");
 
-// Создаём upload-папку и метаданные, если нет
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-if (!fs.existsSync(META_PATH)) {
-  fs.writeFileSync(META_PATH, "{}");
-}
-
+// Инициализация директорий и метаданных
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+if (!fs.existsSync(META_PATH)) fs.writeFileSync(META_PATH, "{}");
 let metadata = JSON.parse(fs.readFileSync(META_PATH, "utf-8"));
 function saveMeta() {
   fs.writeFileSync(META_PATH, JSON.stringify(metadata, null, 2));
 }
 
-// ===== WebSocket для передачи прогресса =====
+// WS-сервер для прогресса загрузки
 const wss = new WebSocketServer({ port: WS_PORT });
 const clients = new Set();
 
-wss.on("connection", (ws) => {
-  ws.isAlive = true;
-  ws.on("pong", () => {
-    ws.isAlive = true;
-  });
+wss.on("connection", (ws, req) => {
+  const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+  ws.uploadId = reqUrl.searchParams.get("uploadId");
   clients.add(ws);
   ws.on("close", () => clients.delete(ws));
 });
 
-// Функция для рассылки прогресса всем подключённым клиентам
-function broadcastProgress(pct) {
-  const msg = JSON.stringify({ progress: pct });
+function broadcastProgress(pct, uploadId) {
   for (const ws of clients) {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(msg);
+    if (ws.readyState === 1 && ws.uploadId === uploadId) {
+      ws.send(JSON.stringify({ progress: pct }));
     }
   }
 }
 
-// Проверка «живости» клиентов каждые 30 секунд
-setInterval(() => {
-  for (const ws of clients) {
-    if (!ws.isAlive) {
-      clients.delete(ws);
-      ws.terminate();
-      continue;
-    }
-    ws.isAlive = false;
-    ws.ping();
-  }
-}, 30000);
-
 console.log(`WebSocket on ws://localhost:${WS_PORT}`);
 
-// ===== HTTP-сервер (webserver) =====
 const webserver = express();
-
 webserver.use(express.static(CLIENT_DIR));
 webserver.get("/", (req, res) =>
   res.sendFile(path.join(CLIENT_DIR, "index.html"))
@@ -86,7 +63,7 @@ webserver.get("/files", (req, res) => {
   res.json(list);
 });
 
-// 2) Скачивание
+// 2) Скачивание файла
 webserver.get("/download/:filename", (req, res) => {
   const fn = req.params.filename;
   const full = path.join(UPLOAD_DIR, fn);
@@ -97,7 +74,7 @@ webserver.get("/download/:filename", (req, res) => {
   res.download(full, original || fn);
 });
 
-// 3) Удаление
+// 3) Удаление файла
 webserver.delete("/files/:filename", (req, res) => {
   const fn = req.params.filename;
   const full = path.join(UPLOAD_DIR, fn);
@@ -109,25 +86,23 @@ webserver.delete("/files/:filename", (req, res) => {
   });
 });
 
-// 4) Загрузка с прогрессом и корректной кириллицей
+// 4) Загрузка с прогрессом
 const upload = multer({ dest: UPLOAD_DIR });
-
 webserver.post("/upload", (req, res) => {
   const total = parseInt(req.headers["content-length"] || "0", 10);
+  const uploadId = req.headers["x-upload-id"];
   let loaded = 0;
 
   req.on("data", (chunk) => {
     loaded += chunk.length;
     const pct = Math.floor((loaded / total) * 100);
-    broadcastProgress(Math.min(99, pct));
+    broadcastProgress(Math.min(pct, 99), uploadId);
   });
 
   upload.single("file")(req, res, (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
 
-    broadcastProgress(100);
+    broadcastProgress(100, uploadId);
 
     const stored = req.file.filename;
     const original = Buffer.from(req.file.originalname, "latin1").toString(
