@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>SQLExplorer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>SQLExplorer</h1>
+
+      <label for="sql">Введите ваш SQL-запрос:</label>
+      <textarea
+        id="sql"
+        rows="5"
+        placeholder="SELECT * FROM persons;"
+      ></textarea>
+
+      <button id="run">Выполнить</button>
+
+      <div id="output"></div>
+
+      <!-- Блок с готовыми вариантами -->
+      <div id="presets">
+        <h2>Примеры запросов</h2>
+        <ul>
+          <li><button class="preset">SHOW TABLES;</button></li>
+          <li>
+            <button class="preset">SELECT * FROM persons LIMIT 5;</button>
+          </li>
+          <li><button class="preset">DESCRIBE persons;</button></li>
+          <li>
+            <button class="preset">
+              SELECT COUNT(*) AS total FROM persons;
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
