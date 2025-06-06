@@ -1,0 +1,16 @@
+**/.idea
+**/.DS_Store
+**/node_modules
+.vscode/
+*.code-workspace
+**/_server.log
+**/uploads
+_nodemon.log
+nginx_caches/
+
+/server/node_modules/
+/client/node_modules/
+
+npm-debug.log*
+yarn-debug.log*
+.DS_Store

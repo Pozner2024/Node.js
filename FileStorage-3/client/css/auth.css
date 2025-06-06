@@ -1,0 +1,81 @@
+/* Стили для страниц входа и регистрации */
+.auth-page {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 0 20px;
+  background-color: #f5f5f5;
+}
+
+.auth-page h1 {
+  margin-bottom: 10px;
+  font-size: 2em;
+}
+
+.auth-page h2 {
+  margin-bottom: 30px;
+  font-size: 1.5em;
+  font-weight: 500;
+}
+
+.auth-page form {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-page form button[type="submit"] {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Контейнер для поля пароля */
+.password-container {
+  position: relative;
+  width: 100%;
+}
+
+.password-container input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.2em;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+.password-hint {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* Ссылки под формой */
+.auth-page form + p {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+}
+
+.auth-page form + p a {
+  color: #3498db;
+  text-decoration: none;
+  margin-left: 5px;
+}
+
+.auth-page form + p a:hover {
+  text-decoration: underline;
+}
