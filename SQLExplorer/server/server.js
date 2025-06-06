@@ -8,11 +8,9 @@ const __dirname = path.dirname(__filename);
 
 // создаём пул соединений
 const pool = mysql.createPool({
-  host: "localhost",
+  socketPath: "/var/run/mysqld/mysqld.sock",
   user: "root",
-  password: "",
   database: "learning_db",
-  port: 3306,
   waitForConnections: true,
   connectionLimit: 10,
 });
