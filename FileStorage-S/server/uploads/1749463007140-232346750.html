@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+
+body {
+  background-color: rgba(0,0,0,.5);
+  font-family: "Oswald", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.menu {
+  background-color: lightblue;
+  position: relative;
+  
+}
+
+.menu__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  width: 100%;
+}
+
+.menu__item {
+  padding: 10px;
+  margin: 0;
+  flex: 1 1 auto;
+  text-align: center;
+}
+  
+.menu__item:hover {
+  cursor: pointer;
+  background-color: yellow;
+}
+
+.menu__item:hover .menu__dropdown {
+  display: flex;
+}
+
+.menu__dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: blue;
+}
+
+.submenu-image {
+  flex: 1 1 30%;
+  background-color: yellow;
+}
+
+.submenu-image_type-orange {
+  background-color: orange;
+}
+
+.submenu {
+  flex: 1 1 70%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.submenu__item {
+  text-align: left;
+  padding: 5px 10px;
+  color: yellow;
+  
+  &:hover {
+    background-color: white;
+    color: blue;
+  }
+}
+
+
+  </style>
+<head>
+  
+  <title>Document</title>
+</head>
+<body>
+  <nav class="menu">
+    <ul class="menu__list">
+      <li class="menu__item">list item 1</li>
+      <li class="menu__item">list item 2
+        <div class="menu__dropdown">
+          <div class="submenu-image"><img src="images/girl.jpg"></div>
+          <ul class="submenu">
+            <li class="submenu__item">submenu 1</li>
+            <li class="submenu__item">submenu 2</li>
+            <li class="submenu__item">submenu 3</li>
+          </ul>
+        </div>
+      </li>
+      <li class="menu__item">list item 3</li>
+      <li class="menu__item">list item 4</li>
+      <li class="menu__item">list item 5
+        <div class="menu__dropdown">
+          <div class="submenu-image"><img src="images/colledg"></div>
+          <ul class="submenu">
+            <li class="submenu__item">submenu 1</li>
+            <li class="submenu__item">submenu 2</li>
+            <li class="submenu__item">submenu 3</li>
+            <li class="submenu__item">submenu 4</li>
+            <li class="submenu__item">submenu 5</li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </nav>
+</body>
+</html>

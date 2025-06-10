@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- По умолчанию: FileStorage. После загрузки страницы скрипт обновит title -->
+    <title>FileStorage</title>
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body>
+    <!-- В это h1 мы динамически подставим username, а также обновим <title> -->
+    <h1 id="header-title">FileStorage</h1>
+
+    <p>
+      Залогинен как <strong id="username-display"></strong> (<a href="/logout"
+        >Выйти</a
+      >)
+    </p>
+
+    <form id="uploadForm">
+      <label for="fileInput" class="file-btn">Выбрать файл</label>
+      <input type="file" id="fileInput" name="file" required />
+      <span id="fileNameDisplay"></span>
+
+      <textarea
+        id="comment"
+        name="comment"
+        placeholder="Комментарий..."
+        rows="3"
+        required
+      ></textarea>
+
+      <button type="submit">Upload</button>
+    </form>
+
+    <div id="progress-container" class="hidden">
+      <progress id="progress-bar" max="100" value="0"></progress>
+    </div>
+    <div id="status"></div>
+
+    <h2>Список файлов</h2>
+    <ul id="fileList"></ul>
+
+    <script src="script.js"></script>
+  </body>
+</html>

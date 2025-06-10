@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FileStorage — Регистрация</title>
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body class="auth-page">
+    <h1>FileStorage</h1>
+    <h2>Регистрация</h2>
+
+    <form id="registerForm">
+      <label>
+        E-mail:
+        <input type="email" name="email" required />
+        <span class="validation-message" id="emailError"></span>
+      </label>
+
+      <label>
+        Пароль:
+        <div class="password-container">
+          <input
+            type="password"
+            name="password"
+            pattern="[0-9]{8}"
+            required
+            placeholder=" "
+          />
+          <span class="password-toggle" id="passwordToggle">👁️</span>
+        </div>
+        <em class="password-hint">Пароль должен содержать 8 цифр</em>
+        <span class="validation-message" id="passwordError"></span>
+      </label>
+
+      <button type="submit">Зарегистрироваться</button>
+
+      <!-- Добавляем div для сообщений -->
+      <div id="statusMessage" class="status-message"></div>
+    </form>
+
+    <p>Уже есть аккаунт? <a href="/">Войти</a></p>
+
+    <script>
+      const form = document.getElementById("registerForm");
+      const statusMessage = document.getElementById("statusMessage");
+      const emailInput = form.querySelector('input[name="email"]');
+      const passwordInput = form.querySelector('input[name="password"]');
+      const emailError = document.getElementById("emailError");
+      const passwordError = document.getElementById("passwordError");
+      const passwordToggle = document.getElementById("passwordToggle");
+
+      // Переключение видимости пароля
+      if (passwordToggle) {
+        passwordToggle.addEventListener("click", function (e) {
+          e.preventDefault(); // Предотвращаем всплытие события
+          const type = passwordInput.getAttribute("type");
+          if (type === "password") {
+            passwordInput.setAttribute("type", "text");
+            this.textContent = "🔒";
+          } else {
+            passwordInput.setAttribute("type", "password");
+            this.textContent = "👁️";
+          }
+        });
+      }
+
+      // Валидация email
+      emailInput.addEventListener("input", function () {
+        if (this.validity.patternMismatch || this.validity.typeMismatch) {
+          emailError.textContent = "Пожалуйста, введите корректный email адрес";
+        } else {
+          emailError.textContent = "";
+        }
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {
+          email: formData.get("email"),
+          password: formData.get("password"),
+        };
+
+        // Проверка длины пароля при отправке формы
+        if (data.password.length < 8) {
+          passwordError.textContent = "Пароль должен состоять из 8 цифр";
+          statusMessage.className = "status-message error";
+          return;
+        }
+
+        if (data.password.length > 8) {
+          passwordError.textContent = "Пароль не должен быть длиннее 8 цифр";
+          statusMessage.className = "status-message error";
+          return;
+        }
+
+        try {
+          const response = await fetch("/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.text();
+
+          if (response.ok) {
+            statusMessage.textContent =
+              "Регистрация прошла успешно. Проверьте вашу почту и перейдите по ссылке для активации аккаунта.";
+            statusMessage.className = "status-message success";
+            form.reset();
+          } else {
+            statusMessage.textContent = result;
+            statusMessage.className = "status-message error";
+          }
+        } catch (error) {
+          statusMessage.textContent =
+            "Произошла ошибка при регистрации. Попробуйте позже.";
+          statusMessage.className = "status-message error";
+        }
+      });
+    </script>
+  </body>
+</html>

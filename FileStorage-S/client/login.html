@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FileStorage — Вход</title>
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body class="auth-page">
+    <h1>FileStorage</h1>
+    <h2>Вход</h2>
+    <form id="loginForm">
+      <label>
+        E-mail:
+        <input type="email" name="email" required />
+      </label>
+      <label>
+        Пароль:
+        <div class="password-container">
+          <input type="password" name="password" pattern="[0-9]{8}" required />
+          <span class="password-toggle" id="passwordToggle">👁️</span>
+        </div>
+        <em class="password-hint">Пароль должен содержать 8 цифр</em>
+      </label>
+      <button type="submit">Войти</button>
+
+      <!-- Добавляем div для сообщений -->
+      <div id="statusMessage" class="status-message"></div>
+    </form>
+    <p>Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+
+    <script>
+      const form = document.getElementById("loginForm");
+      const statusMessage = document.getElementById("statusMessage");
+      const passwordInput = document.querySelector('input[name="password"]');
+      const passwordToggle = document.getElementById("passwordToggle");
+
+      // Переключение видимости пароля
+      passwordToggle.addEventListener("click", function () {
+        const type = passwordInput.getAttribute("type");
+        if (type === "password") {
+          passwordInput.setAttribute("type", "text");
+          this.textContent = "🔒";
+        } else {
+          passwordInput.setAttribute("type", "password");
+          this.textContent = "👁️";
+        }
+      });
+
+      // Обработка отправки формы
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {
+          email: formData.get("email"),
+          password: formData.get("password"),
+        };
+
+        try {
+          const response = await fetch("/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            // При успешном входе перенаправляем на главную страницу
+            window.location.href = "/index.html";
+          } else {
+            const result = await response.text();
+            statusMessage.textContent = result || "Неверный email или пароль";
+            statusMessage.className = "status-message error";
+          }
+        } catch (error) {
+          statusMessage.textContent =
+            "Произошла ошибка при входе. Попробуйте позже.";
+          statusMessage.className = "status-message error";
+        }
+      });
+    </script>
+  </body>
+</html>
