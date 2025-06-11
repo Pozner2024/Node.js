@@ -1,4 +1,5 @@
 // server/server.js
+import "./modules/init-env.js";
 import express from "express";
 import session from "express-session";
 import path from "path";

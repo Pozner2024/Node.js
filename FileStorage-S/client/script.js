@@ -23,7 +23,6 @@ async function fetchWithSession(url, options = {}) {
   const headers = addSessionHeader(options.headers || {});
   const response = await fetch(url, { ...options, headers });
 
-  // If response contains new sessionId, save it
   const newSessionId = response.headers.get("X-Session-ID");
   if (newSessionId) {
     setSessionId(newSessionId);
@@ -37,9 +36,7 @@ async function login(email, password) {
   try {
     const response = await fetchWithSession("/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
@@ -56,9 +53,7 @@ async function login(email, password) {
 
 async function logout() {
   try {
-    await fetchWithSession("/logout", {
-      method: "POST",
-    });
+    await fetchWithSession("/logout", { method: "GET" });
     clearSessionId();
   } catch (error) {
     console.error("Logout error:", error);
@@ -79,6 +74,7 @@ async function checkAuth() {
   }
 }
 
+// DOM elements
 const form = document.getElementById("uploadForm");
 const fileInput = document.getElementById("fileInput");
 const fileNameDisplay = document.getElementById("fileNameDisplay");
@@ -90,34 +86,28 @@ const fileListEl = document.getElementById("fileList");
 const usernameDisplay = document.getElementById("username-display");
 const headerTitle = document.getElementById("header-title");
 
-// Функция для проверки, авторизован ли пользователь, и установки login
+// Инициализация пользователя и UI
 async function initUser() {
   if (!usernameDisplay) return;
   try {
     const data = await checkAuth();
-    const login = data.username;
-    // Вставляем login на страницу
-    usernameDisplay.textContent = login;
-    // Обновляем заголовок страницы
+    usernameDisplay.textContent = data.username;
     document.title = `FileStorage`;
     headerTitle.textContent = `FileStorage`;
-  } catch (err) {
-    // Если неавторизован → сразу на / (login.html)
+  } catch {
     window.location.href = "/";
   }
 }
 
-// === 0) При загрузке DOM проверяем, авторизован ли пользователь ===
 window.addEventListener("DOMContentLoaded", () => {
   initUser().then(() => {
-    // Только после того, как проверили авторизацию, запускаем загрузку списка файлов
     if (fileListEl) {
       loadFileList();
     }
   });
 });
 
-// === 1) Показываем имя выбранного файла в UI ===
+// Показ имени файла
 if (fileInput && fileNameDisplay) {
   fileInput.addEventListener("change", () => {
     fileNameDisplay.textContent = fileInput.files[0]
@@ -126,19 +116,16 @@ if (fileInput && fileNameDisplay) {
   });
 }
 
-// === 2) Загружаем список файлов и строим HTML-UI ===
+// Загрузка списка файлов
 async function loadFileList() {
   try {
     const res = await fetchWithSession("/files");
-    if (!res.ok) {
-      throw new Error("Ошибка при получении списка файлов");
-    }
+    if (!res.ok) throw new Error("Ошибка при получении списка файлов");
     const files = await res.json();
     fileListEl.innerHTML = "";
 
     files.forEach(({ filename, originalname, comment }) => {
       const li = document.createElement("li");
-
       const div = document.createElement("div");
       const link = document.createElement("a");
       link.href = `/download/${encodeURIComponent(filename)}`;
@@ -158,12 +145,14 @@ async function loadFileList() {
       delBtn.dataset.filename = filename;
       delBtn.textContent = "🗑️ Удалить";
       delBtn.onclick = async () => {
-        const fn = delBtn.dataset.filename;
         if (!confirm(`Удалить файл «${originalname}»?`)) return;
         try {
-          const resp = await fetch(`/files/${encodeURIComponent(fn)}`, {
-            method: "DELETE",
-          });
+          const resp = await fetchWithSession(
+            `/files/${encodeURIComponent(filename)}`,
+            {
+              method: "DELETE",
+            }
+          );
           if (resp.ok) {
             loadFileList();
           } else {
@@ -183,7 +172,7 @@ async function loadFileList() {
   }
 }
 
-// === 3) Обработка загрузки файла: WebSocket + fetch("/upload") ===
+// Обработка загрузки файла
 if (form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -195,22 +184,17 @@ if (form) {
       return;
     }
 
-    // Генерируем уникальный uploadId
     const uploadId =
       Date.now().toString() + Math.random().toString(36).substr(2);
-
-    // Показываем прогресс-бар
     progressBar.value = 0;
     progressContainer.classList.remove("hidden");
     status.textContent = "⏳ Загрузка...";
 
-    // Собираем FormData и отправляем файл
     const fd = new FormData();
     fd.append("file", file);
     fd.append("comment", comment);
 
     try {
-      // Открываем WebSocket для прогресса
       const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
       const ws = new WebSocket(
         `${wsProtocol}://${location.hostname}:3001/?uploadId=${uploadId}`
@@ -238,9 +222,7 @@ if (form) {
         try {
           const res = await fetchWithSession("/upload", {
             method: "POST",
-            headers: {
-              "X-Upload-Id": uploadId,
-            },
+            headers: { "X-Upload-Id": uploadId },
             body: fd,
           });
 
