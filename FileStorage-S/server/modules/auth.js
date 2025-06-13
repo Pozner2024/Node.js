@@ -4,6 +4,7 @@ import path from "path";
 import nodemailer from "nodemailer";
 import Handlebars from "handlebars";
 import fs from "fs/promises";
+import { fileURLToPath } from "url";
 
 import { findUserByEmail, createUser, findActiveUserByEmail } from "./db.js";
 import { CLIENT_DIR, emailConfig } from "./config.js";
@@ -20,20 +21,20 @@ async function sendActivationEmail(email, activationLink) {
   try {
     await transporter.verify();
 
-    // Читаем шаблон
+    // Get the current file's directory path
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Construct the template path relative to the current file
     const templatePath = path.join(
-      path.dirname(new URL(import.meta.url).pathname),
+      __dirname,
       "..",
       "templates",
       "activation-email.hbs"
     );
 
     const template = await fs.readFile(templatePath, "utf8");
-
-    // Компилируем шаблон
     const compiledTemplate = Handlebars.compile(template);
-
-    // Рендерим HTML с данными
     const html = compiledTemplate({ activationLink });
 
     await transporter.sendMail({
